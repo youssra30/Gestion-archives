@@ -7,6 +7,125 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Documentation des routes API (Backend)
+
+Cette section documente les endpoints definis dans `routes/api.php`.
+
+### Base URL
+
+- Locale: `http://localhost:8000/api`
+
+### Authentification
+
+- Toutes les routes sont protegees par `auth:sanctum`.
+- Un token Sanctum valide doit etre envoye dans l'en-tete:
+
+```http
+Authorization: Bearer <token>
+```
+
+### Roles utilises
+
+- `ADMIN_SYSTEME`
+- `RESPONSABLE_ARCHIVES`
+- `AGENT_ACCUEIL`
+- `CONSULTANT`
+- `ETUDIANT`
+
+### Convention des routes `apiResource`
+
+Chaque ressource expose les routes REST suivantes:
+
+- `GET /{resource}`: lister
+- `POST /{resource}`: creer
+- `GET /{resource}/{id}`: afficher
+- `PUT/PATCH /{resource}/{id}`: modifier
+- `DELETE /{resource}/{id}`: supprimer
+
+### Endpoints par ressource
+
+| Ressource | Prefixe | Roles autorises |
+| --- | --- | --- |
+| Utilisateurs | `/utilisateurs` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES` |
+| Bac infos | `/bacinfos` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES` |
+| Transferts externes | `/transferts` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES` |
+| Etudiants | `/etudiants` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL` |
+| Dossiers d'archive | `/dossiers` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL`, `CONSULTANT` |
+| Documents | `/documents` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL`, `CONSULTANT` |
+| Mouvements | `/mouvements` | `ADMIN_SYSTEME`, `AGENT_ACCUEIL` |
+| Reclamations | `/reclamations` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL`, `CONSULTANT`, `ETUDIANT` |
+
+### Liste detaillee des endpoints
+
+#### `utilisateurs`
+
+- `GET /api/utilisateurs`
+- `POST /api/utilisateurs`
+- `GET /api/utilisateurs/{id}`
+- `PUT/PATCH /api/utilisateurs/{id}`
+- `DELETE /api/utilisateurs/{id}`
+
+#### `bacinfos`
+
+- `GET /api/bacinfos`
+- `POST /api/bacinfos`
+- `GET /api/bacinfos/{id}`
+- `PUT/PATCH /api/bacinfos/{id}`
+- `DELETE /api/bacinfos/{id}`
+
+#### `transferts`
+
+- `GET /api/transferts`
+- `POST /api/transferts`
+- `GET /api/transferts/{id}`
+- `PUT/PATCH /api/transferts/{id}`
+- `DELETE /api/transferts/{id}`
+
+#### `etudiants`
+
+- `GET /api/etudiants`
+- `POST /api/etudiants`
+- `GET /api/etudiants/{id}`
+- `PUT/PATCH /api/etudiants/{id}`
+- `DELETE /api/etudiants/{id}`
+
+#### `dossiers`
+
+- `GET /api/dossiers`
+- `POST /api/dossiers`
+- `GET /api/dossiers/{id}`
+- `PUT/PATCH /api/dossiers/{id}`
+- `DELETE /api/dossiers/{id}`
+
+#### `documents`
+
+- `GET /api/documents`
+- `POST /api/documents`
+- `GET /api/documents/{id}`
+- `PUT/PATCH /api/documents/{id}`
+- `DELETE /api/documents/{id}`
+
+#### `mouvements`
+
+- `GET /api/mouvements`
+- `POST /api/mouvements`
+- `GET /api/mouvements/{id}`
+- `PUT/PATCH /api/mouvements/{id}`
+- `DELETE /api/mouvements/{id}`
+
+#### `reclamations`
+
+- `GET /api/reclamations`
+- `POST /api/reclamations`
+- `GET /api/reclamations/{id}`
+- `PUT/PATCH /api/reclamations/{id}`
+- `DELETE /api/reclamations/{id}`
+
+### Note
+
+- Les endpoints `/api` ci-dessus supposent que l'application est servie avec `php artisan serve`.
+- Les regles fines de validation/champs se trouvent dans les Controllers et Form Requests associes.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
