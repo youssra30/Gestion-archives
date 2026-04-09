@@ -13,6 +13,17 @@ use App\Http\Controllers\AuthController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
+// =========================================================
+// 🔓 ROUTES PUBLIQUES (Pas besoin de token)
+// =========================================================
+
+Route::post('/login', [UtilisateurController::class, 'login']);
+
+
+// =========================================================
+// 🔒 ROUTES PROTÉGÉES (Nécessitent un token valide)
+// =========================================================
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // ----------------- ADMIN_SYSTEME, RESPONSABLE_ARCHIVES -----------------
