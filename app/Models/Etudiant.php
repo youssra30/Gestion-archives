@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\DossierArchive;
+use App\Models\BacInfo;
 
 class Etudiant extends Model
 {

@@ -16,13 +16,13 @@ class UtilisateurController extends Controller
     }
 
     public function store(Request $request) {
-    $user = Auth::user();
+      $user = Auth::user();
 
     if (!$user || $user->role !== 'ADMIN_SYSTEME') {
         return response()->json(['message' => 'Seul le Super Admin peut créer des utilisateurs.'], 403);
     }
 
-    $data = $request->validate([
+     $data = $request->validate([
         'nom'=>'required|string',
         'prenom'=>'required|string',
         'username'=>'required|string|unique:utilisateurs',
