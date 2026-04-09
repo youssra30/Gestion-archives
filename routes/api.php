@@ -9,6 +9,9 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\MouvementController;
 use App\Http\Controllers\ReclamationController;
 use App\Http\Controllers\TransfertExterneController;
+use App\Http\Controllers\AuthController;
+
+Route::post('/login', [AuthController::class, 'login']);
 
 // =========================================================
 // 🔓 ROUTES PUBLIQUES (Pas besoin de token)
