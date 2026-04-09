@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+
     public function up(): void
     {
         Schema::create('utilisateurs', function (Blueprint $table) {
@@ -19,15 +17,18 @@ return new class extends Migration
          $table->string('email')->unique();
          $table->string('password');
          $table->string('telephone')->nullable();
-         $table->enum('role', ['ADMIN_SYSTEME', 'RESPONSABLE_ARCHIVES', 'AGENT_ACCUEIL', 'CONSULTANT', 'ETUDIANT'])->default('AGENT_ACCUEIL');
+         $table->enum('role', [
+                     'ADMIN_SYSTEME',
+                     'RESPONSABLE_ARCHIVES',
+                     'AGENT_ACCUEIL',
+                     'CONSULTANT'
+                    ])->default('AGENT_ACCUEIL');
          $table->timestamp('derniereConnexion')->nullable();
-         $table->timestamps(); // Hada fih dateCreation (created_at)
+         $table->timestamps(); 
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         Schema::dropIfExists('utilisateurs');

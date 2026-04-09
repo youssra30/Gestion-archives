@@ -16,18 +16,27 @@ class UtilisateurController extends Controller
     }
 
     public function store(Request $request) {
-        $data = $request->validate([
-            'nom'=>'required|string',
-            'prenom'=>'required|string',
-            'username'=>'required|string|unique:utilisateurs',
-            'email'=>'required|email|unique:utilisateurs',
-            'password'=>'required|string',
-            'telephone'=>'nullable|string',
-            'role'=>'nullable|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT'
-        ]);
-        $data['password'] = bcrypt($data['password']);
-        return response()->json(Utilisateur::create($data), 201);
+    $user = auth()->user();
+
+    if (!$user || $user->role !== 'ADMIN_SYSTEME') {
+        return response()->json(['message' => 'Seul le Super Admin peut créer des utilisateurs.'], 403);
     }
+
+    $data = $request->validate([
+        'nom'=>'required|string',
+        'prenom'=>'required|string',
+        'username'=>'required|string|unique:utilisateurs',
+        'email'=>'required|email|unique:utilisateurs',
+        'password'=>'required|string',
+        'telephone'=>'nullable|string',
+        'role'=>'required|in:RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT'
+    ]);
+
+    $data['password'] = bcrypt($data['password']);
+    $newUser = Utilisateur::create($data);
+
+    return response()->json($newUser, 201);
+}
 
     public function update(Request $request, $id) {
         $user = Utilisateur::findOrFail($id);
