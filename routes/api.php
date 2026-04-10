@@ -43,4 +43,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('reclamations', ReclamationController::class);
     });
 
+    Route::post('/etudiants/import', [EtudiantController::class, 'import']);
+
 });

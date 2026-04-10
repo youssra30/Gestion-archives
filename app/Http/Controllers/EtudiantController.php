@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Etudiant;
 use Illuminate\Http\Request;
+use App\Imports\EtudiantsImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EtudiantController extends Controller
 {
@@ -45,5 +47,26 @@ class EtudiantController extends Controller
     public function destroy($id) {
         Etudiant::findOrFail($id)->delete();
         return response()->json(['message'=>'Etudiant supprimé']);
+    }
+
+    public function import(Request $request) 
+    {
+
+    $request->validate([
+        'file' => 'required'
+    ]);
+
+    try {
+        Excel::import(new EtudiantsImport, $request->file('file'));
+        
+        return response()->json([
+            'message' => 'Les étudiants ont été importés avec succès !'
+        ], 200);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Erreur lors de l\'importation : ' . $e->getMessage()
+        ], 500);
+    }
     }
 }
