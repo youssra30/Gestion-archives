@@ -4,80 +4,100 @@ namespace App\Http\Controllers;
 
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash; // ⚡ Très important : n'oubliez pas d'importer Hash
+use Illuminate\Support\Facades\Hash;
 
-use Illuminate\Support\Facades\Auth;
 class UtilisateurController extends Controller
 {
-    // ... vos autres méthodes (index, show, store, etc.) ...
-
+    
     public function login(Request $request)
     {
-        // 1. Validation des champs
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
-        // 2. Recherche de l'utilisateur
         $user = Utilisateur::where('email', $request->email)->first();
 
-        // 3. Vérification de l'utilisateur et du mot de passe
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Les identifiants sont incorrects.'
             ], 401);
         }
 
-        // 4. Vérification stricte du rôle (Seul l'Admin peut se connecter ici)
-        if ($user->role !== 'ADMIN_SYSTEME') {
+        if (!in_array($user->role, ['SUPER_ADMIN', 'ADMIN_SYSTEME'])) {
             return response()->json([
-                'message' => 'Accès refusé. Réservé aux administrateurs.'
+                'message' => 'Accès refusé.'
             ], 403);
         }
 
-        // 5. Mettre à jour la date de dernière connexion (puisque vous avez ce champ !)
         $user->update([
             'derniereConnexion' => now()
         ]);
 
-        // 6. Génération du token Sanctum
-        // Optionnel : on peut supprimer les anciens tokens avec $user->tokens()->delete();
-        $token = $user->createToken('admin_token')->plainTextToken;
-    public function store(Request $request) {
-      $user = Auth::user();
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-    if (!$user || $user->role !== 'ADMIN_SYSTEME') {
-        return response()->json(['message' => 'Seul le Super Admin peut créer des utilisateurs.'], 403);
-    }
-
-     $data = $request->validate([
-        'nom'=>'required|string',
-        'prenom'=>'required|string',
-        'username'=>'required|string|unique:utilisateurs',
-        'email'=>'required|email|unique:utilisateurs',
-        'password'=>'required|string',
-        'telephone'=>'nullable|string',
-        'role'=>'required|in:RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT'
-    ]);
-
-    $data['password'] = bcrypt($data['password']);
-    $newUser = Utilisateur::create($data);
-
-    return response()->json($newUser, 201);
-}
-
-    public function update(Request $request, $id) {
-        $user = Utilisateur::findOrFail($id);
-        $user->update($request->all());
-        return response()->json($user);
-    }
-
-        // 7. Réponse avec le token
         return response()->json([
             'message' => 'Connexion réussie',
             'utilisateur' => $user,
             'token' => $token
         ], 200);
+    }
+     
+    public function store(Request $request)
+    {
+        $request->validate([
+         'username' => 'required|unique:utilisateurs',
+         'nom' => 'required',
+         'prenom' => 'required',
+         'email' => 'required|email|unique:utilisateurs',
+         'password' => 'required|min:6',
+         'role' => 'required|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL'
+        ]);
+
+       $currentUser = $request->user();
+
+       
+        if (!$currentUser) {
+            return response()->json([
+                'message' => 'Non authentifié'
+            ], 401);
+        }
+
+     
+        if ($currentUser->role === 'SUPER_ADMIN') {
+            if ($request->role !== 'ADMIN_SYSTEME') {
+                return response()->json([
+                    'message' => 'SuperAdmin peut créer Admin!!'
+                ], 403);
+            }
+        }
+
+        elseif ($currentUser->role === 'ADMIN_SYSTEME') {
+            if (!in_array($request->role, ['RESPONSABLE_ARCHIVES', 'AGENT_ACCUEIL'])) {
+                return response()->json([
+                    'message' => 'Admin ne peut créer que Responsable ou Agent.'
+                ], 403);
+            }
+        }
+
+        else {
+            return response()->json([
+                'message' => 'Accès interdit'
+            ], 403);
+        }
+
+       $user = Utilisateur::create([
+         'username' => $request->username,
+         'nom' => $request->nom,
+         'prenom' => $request->prenom,
+         'email' => $request->email,
+         'password' => Hash::make($request->password),
+         'role' => $request->role
+        ]);
+
+        return response()->json([
+            'message' => 'Utilisateur créé avec succès',
+            'user' => $user
+        ]);
     }
 }

@@ -26,8 +26,8 @@ Route::post('/login', [UtilisateurController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // ----------------- ADMIN_SYSTEME, RESPONSABLE_ARCHIVES -----------------
-    Route::middleware('role:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES')->group(function () {
+    // ----------------- SUPER_ADMIN,ADMIN_SYSTEME, RESPONSABLE_ARCHIVES -----------------
+Route::middleware('role:SUPER_ADMIN,ADMIN_SYSTEME,RESPONSABLE_ARCHIVES')->group(function () {    
         Route::apiResource('utilisateurs', UtilisateurController::class);
         Route::apiResource('bacinfos', BacInfoController::class);
         Route::apiResource('transferts', TransfertExterneController::class);
