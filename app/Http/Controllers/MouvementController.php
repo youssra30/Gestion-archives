@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mouvement;
+use App\Exports\MouvementsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class MouvementController extends Controller
@@ -43,5 +45,13 @@ class MouvementController extends Controller
     public function destroy($id) {
         Mouvement::findOrFail($id)->delete();
         return response()->json(['message'=>'Mouvement supprimé']);
+    }
+
+    /**
+     * ✅ تصدير جميع الحركات إلى Excel
+     */
+    public function export()
+    {
+        return Excel::download(new MouvementsExport, 'mouvements_' . date('Y-m-d_H-i-s') . '.xlsx');
     }
 }

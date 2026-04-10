@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Etudiant;
+use App\Exports\EtudiantsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class EtudiantController extends Controller
@@ -45,5 +47,11 @@ class EtudiantController extends Controller
     public function destroy($id) {
         Etudiant::findOrFail($id)->delete();
         return response()->json(['message'=>'Etudiant supprimé']);
+    }
+    
+    // ✅ أضف هذه الدالة للتصدير
+    public function export()
+    {
+        return Excel::download(new EtudiantsExport, 'etudiants_' . date('Y-m-d_H-i-s') . '.xlsx');
     }
 }

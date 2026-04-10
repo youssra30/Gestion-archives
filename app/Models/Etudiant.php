@@ -38,4 +38,9 @@ class Etudiant extends Model
     public function bacInfo() {
         return $this->hasOne(BacInfo::class);
     }
+    
+    // ✅ أضف هذه العلاقة
+    public function utilisateur() {
+        return $this->belongsTo(Utilisateur::class);
+    }
 }
