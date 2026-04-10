@@ -44,13 +44,13 @@ class UtilisateurController extends Controller
         if ($currentUser->role === 'SUPER_ADMIN') {
             if ($request->role !== 'ADMIN_SYSTEME') {
                 return response()->json([
-                    'message' => 'SuperAdmin peut فقط créer ADMIN_SYSTEME'
+                    'message' => 'SuperAdmin peut  créer ADMIN_SYSTEME'
                 ], 403);
             }
         } elseif ($currentUser->role === 'ADMIN_SYSTEME') {
             if (!in_array($request->role, ['RESPONSABLE_ARCHIVES', 'AGENT_ACCUEIL'])) {
                 return response()->json([
-                    'message' => 'Admin peut فقط créer Responsable ou Agent'
+                    'message' => 'Admin peut créer Responsable_Archives ou Agent_Acceuil'
                 ], 403);
             }
         } else {
