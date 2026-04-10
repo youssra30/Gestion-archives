@@ -10,120 +10,139 @@ use Illuminate\Support\Facades\Hash;
 
 class UtilisateurController extends Controller
 {
-    /**
-     * عرض قائمة جميع المستخدمين
-     */
+    
     public function index()
     {
         return response()->json(Utilisateur::all());
     }
 
-    /**
-     * عرض مستخدم محدد
-     */
     public function show($id)
     {
         return response()->json(Utilisateur::findOrFail($id));
     }
 
-    /**
-     * إضافة مستخدم جديد
-     */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
+            'username' => 'required|unique:utilisateurs',
             'nom' => 'required|string',
             'prenom' => 'required|string',
-            'username' => 'required|unique:utilisateurs',
             'email' => 'required|email|unique:utilisateurs',
-            'password' => 'required|string|min:6',
+            'password' => 'required|min:6',
             'telephone' => 'nullable|string',
-            'role' => 'required|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT'
+            'role' => 'required|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL'
         ]);
 
-        $data['password'] = Hash::make($data['password']);
-        
-        $user = Utilisateur::create($data);
-        
-        return response()->json($user, 201);
+        $currentUser = $request->user();
+
+        if (!$currentUser) {
+            return response()->json([
+                'message' => 'Non authentifié'
+            ], 401);
+        }
+
+        if ($currentUser->role === 'SUPER_ADMIN') {
+            if ($request->role !== 'ADMIN_SYSTEME') {
+                return response()->json([
+                    'message' => 'SuperAdmin peut فقط créer ADMIN_SYSTEME'
+                ], 403);
+            }
+        } elseif ($currentUser->role === 'ADMIN_SYSTEME') {
+            if (!in_array($request->role, ['RESPONSABLE_ARCHIVES', 'AGENT_ACCUEIL'])) {
+                return response()->json([
+                    'message' => 'Admin peut فقط créer Responsable ou Agent'
+                ], 403);
+            }
+        } else {
+            return response()->json([
+                'message' => 'Accès interdit'
+            ], 403);
+        }
+
+        $user = Utilisateur::create([
+            'username' => $request->username,
+            'nom' => $request->nom,
+            'prenom' => $request->prenom,
+            'email' => $request->email,
+            'telephone' => $request->telephone,
+            'password' => Hash::make($request->password),
+            'role' => $request->role
+        ]);
+
+        return response()->json([
+            'message' => 'Utilisateur créé avec succès',
+            'user' => $user
+        ], 201);
     }
 
-    /**
-     * تحديث بيانات مستخدم
-     */
     public function update(Request $request, $id)
     {
         $user = Utilisateur::findOrFail($id);
-        
+
         $data = $request->validate([
+            'username' => 'sometimes|unique:utilisateurs,username,' . $id,
             'nom' => 'sometimes|string',
             'prenom' => 'sometimes|string',
-            'username' => 'sometimes|unique:utilisateurs,username,' . $id,
             'email' => 'sometimes|email|unique:utilisateurs,email,' . $id,
             'telephone' => 'nullable|string',
+            'password' => 'nullable|min:6',
             'role' => 'sometimes|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT'
         ]);
-        
+
         if ($request->has('password')) {
             $data['password'] = Hash::make($request->password);
         }
-        
+
         $user->update($data);
-        
+
         return response()->json($user);
     }
 
-    /**
-     * حذف مستخدم
-     */
+   
     public function destroy($id)
     {
         $user = Utilisateur::findOrFail($id);
         $user->delete();
-        
-        return response()->json(['message' => 'Utilisateur supprimé avec succès']);
+
+        return response()->json([
+            'message' => 'Utilisateur supprimé avec succès'
+        ]);
     }
 
-    /**
-     * تسجيل الدخول
-     */
+   
     public function login(Request $request)
     {
-        // 1. Validation des champs
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
-        // 2. Recherche de l'utilisateur
         $user = Utilisateur::where('email', $request->email)->first();
 
-        // 3. Vérification de l'utilisateur et du mot de passe
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Les identifiants sont incorrects.'
+                'message' => 'Les identifiants sont incorrects'
             ], 401);
         }
 
-        // 4. Vérification stricte du rôle (Seul l'Admin peut se connecter ici)
-        if ($user->role !== 'ADMIN_SYSTEME') {
+    
+        if (!in_array($user->role, ['SUPER_ADMIN', 'ADMIN_SYSTEME'])) {
             return response()->json([
-                'message' => 'Accès refusé. Réservé aux administrateurs.'
+                'message' => 'Accès refusé'
             ], 403);
         }
 
-        // 5. Mettre à jour la date de dernière connexion
+      
+        $user->tokens()->delete();
+
+      
         $user->update([
             'derniereConnexion' => now()
         ]);
 
-        // 6. Supprimer les anciens tokens (optionnel)
-        $user->tokens()->delete();
+       
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-        // 7. Génération du token Sanctum
-        $token = $user->createToken('admin_token')->plainTextToken;
-
-        // 8. Réponse avec le token
         return response()->json([
             'message' => 'Connexion réussie',
             'utilisateur' => $user,
@@ -131,23 +150,21 @@ class UtilisateurController extends Controller
         ], 200);
     }
 
-    /**
-     * تسجيل الخروج
-     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        
+
         return response()->json([
             'message' => 'Déconnexion réussie'
         ], 200);
     }
 
-    /**
-     * ✅ تصدير جميع المستخدمين إلى Excel
-     */
+   
     public function export()
     {
-        return Excel::download(new UtilisateursExport, 'utilisateurs_' . date('Y-m-d_H-i-s') . '.xlsx');
+        return Excel::download(
+            new UtilisateursExport,
+            'utilisateurs_' . date('Y-m-d_H-i-s') . '.xlsx'
+        );
     }
 }
