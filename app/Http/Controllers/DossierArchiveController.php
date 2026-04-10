@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\DossierArchive;
+use App\Exports\DossiersExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class DossierArchiveController extends Controller
@@ -38,5 +40,11 @@ class DossierArchiveController extends Controller
     public function destroy($id) {
         DossierArchive::findOrFail($id)->delete();
         return response()->json(['message'=>'Dossier supprimé']);
+    }
+    
+    // ✅ أضف هذه الدالة للتصدير
+    public function export()
+    {
+        return Excel::download(new DossiersExport, 'dossiers_archives_' . date('Y-m-d_H-i-s') . '.xlsx');
     }
 }

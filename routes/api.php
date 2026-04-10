@@ -9,16 +9,9 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\MouvementController;
 use App\Http\Controllers\ReclamationController;
 use App\Http\Controllers\TransfertExterneController;
-use App\Http\Controllers\AuthController;
 
-Route::post('/login', [AuthController::class, 'login']);
-
-// =========================================================
-// 🔓 ROUTES PUBLIQUES (Pas besoin de token)
-// =========================================================
-
+// ✅ مسار تسجيل الدخول
 Route::post('/login', [UtilisateurController::class, 'login']);
-
 
 // =========================================================
 // 🔒 ROUTES PROTÉGÉES (Nécessitent un token valide)
@@ -28,6 +21,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ----------------- ADMIN_SYSTEME, RESPONSABLE_ARCHIVES -----------------
     Route::middleware('role:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES')->group(function () {
+        
+        // ⭐ هام: يجب وضع روابط الـ Export قبل الـ apiResource لتجنب خطأ 404
+        Route::get('/utilisateurs/export', [UtilisateurController::class, 'export']);
+        Route::get('/etudiants/export', [EtudiantController::class, 'export']);
+        Route::get('/dossiers/export', [DossierArchiveController::class, 'export']);
+        Route::get('/mouvements/export', [MouvementController::class, 'export']);
+        Route::get('/reclamations/export', [ReclamationController::class, 'export']);
+        Route::get('/transferts/export', [TransfertExterneController::class, 'export']);
+
+        // مسارات الـ Resources
         Route::apiResource('utilisateurs', UtilisateurController::class);
         Route::apiResource('bacinfos', BacInfoController::class);
         Route::apiResource('transferts', TransfertExterneController::class);
