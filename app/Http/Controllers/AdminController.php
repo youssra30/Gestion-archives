@@ -7,13 +7,12 @@ use Illuminate\Http\Request;
 class AdminController extends Controller
 
 {
-    // 🔐 Check role helper
+    
     private function checkAdmin($user)
     {
         return in_array($user->role, ['SUPER_ADMIN', 'ADMIN_SYSTEME']);
     }
 
-    // 💾 BACKUP
     public function backup(Request $request)
     {
         if (!$this->checkAdmin($request->user())) {
@@ -33,7 +32,6 @@ class AdminController extends Controller
         ]);
     }
 
-    // 🔄 RESTORE
     public function restore(Request $request)
     {
         if (!$this->checkAdmin($request->user())) {

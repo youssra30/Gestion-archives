@@ -16,7 +16,6 @@ class ParametreController extends Controller
 
     public function update(Request $request)
     {
-        // غالباً كيتدار ف database مشي config مباشرة
         return response()->json([
             'message' => 'Paramètres mis à jour'
         ]);
