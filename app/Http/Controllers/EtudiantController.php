@@ -49,7 +49,7 @@ class EtudiantController extends Controller
         return response()->json(['message'=>'Etudiant supprimé']);
     }
     
-    // ✅ أضف هذه الدالة للتصدير
+    
     public function export()
     {
         return Excel::download(new EtudiantsExport, 'etudiants_' . date('Y-m-d_H-i-s') . '.xlsx');

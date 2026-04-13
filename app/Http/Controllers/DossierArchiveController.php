@@ -42,7 +42,6 @@ class DossierArchiveController extends Controller
         return response()->json(['message'=>'Dossier supprimé']);
     }
     
-    // ✅ أضف هذه الدالة للتصدير
     public function export()
     {
         return Excel::download(new DossiersExport, 'dossiers_archives_' . date('Y-m-d_H-i-s') . '.xlsx');

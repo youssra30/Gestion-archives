@@ -43,9 +43,7 @@ class TransfertExterneController extends Controller
         return response()->json(['message'=>'Transfert supprimé']);
     }
 
-    /**
-     * ✅ تصدير جميع التحويلات الخارجية إلى Excel
-     */
+   
     public function export()
     {
         return Excel::download(new TransfertsExport, 'transferts_' . date('Y-m-d_H-i-s') . '.xlsx');

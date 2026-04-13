@@ -47,9 +47,7 @@ class MouvementController extends Controller
         return response()->json(['message'=>'Mouvement supprimé']);
     }
 
-    /**
-     * ✅ تصدير جميع الحركات إلى Excel
-     */
+    
     public function export()
     {
         return Excel::download(new MouvementsExport, 'mouvements_' . date('Y-m-d_H-i-s') . '.xlsx');
