@@ -48,7 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // ----------------- ADMIN_SYSTEME, AGENT_ACCUEIL -----------------
     Route::middleware('role:ADMIN_SYSTEME,AGENT_ACCUEIL')->group(function () {
         
-        // ⭐⭐⭐ Routes spécifiques pour les mouvements (DOIVENT être avant apiResource)
+        // ⭐⭐⭐ Routes pour la gestion des dossiers (Agent Accueil)
+        Route::get('/dossiers/rechercher', [DossierArchiveController::class, 'rechercher']);
+        Route::get('/dossiers/consulter/{id}', [DossierArchiveController::class, 'consulter']);
+        Route::post('/dossiers/receptionner', [DossierArchiveController::class, 'receptionner']);
+        
+        // ⭐⭐⭐ Routes pour les mouvements
         Route::get('/mouvements/en-cours', [MouvementController::class, 'enCours']);
         Route::get('/mouvements/en-retard', [MouvementController::class, 'enRetard']);
         Route::get('/mouvements/export', [MouvementController::class, 'export']);
