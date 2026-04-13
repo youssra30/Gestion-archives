@@ -6,6 +6,7 @@ use App\Models\Etudiant;
 use App\Exports\EtudiantsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
+use App\Imports\EtudiantsImport;
 
 class EtudiantController extends Controller
 {
@@ -19,20 +20,20 @@ class EtudiantController extends Controller
 
     public function store(Request $request) {
         $data = $request->validate([
-            'cne'=>'required|unique:etudiants',
-            'cin'=>'required|unique:etudiants',
-            'nom'=>'required|string',
-            'prenom'=>'required|string',
-            'dateNaissance'=>'required|date',
-            'lieuNaissance'=>'required|string',
-            'nationalite'=>'required|string',
-            'sexe'=>'required|in:MASCULIN,FEMININ',
-            'adresse'=>'required|string',
-            'telephone'=>'required|string',
-            'email'=>'required|email|unique:etudiants',
-            'filiere'=>'required|string',
-            'anneeInscription'=>'required|integer',
-            'utilisateur_id'=>'nullable|exists:utilisateurs,id'
+            'cne' => 'required|unique:etudiants',
+            'cin' => 'required|unique:etudiants',
+            'nom' => 'required|string',
+            'prenom' => 'required|string',
+            'dateNaissance' => 'required|date',
+            'lieuNaissance' => 'required|string',
+            'nationalite' => 'required|string',
+            'sexe' => 'required|in:MASCULIN,FEMININ',
+            'adresse' => 'required|string',
+            'telephone' => 'required|string',
+            'email' => 'required|email|unique:etudiants',
+            'filiere' => 'required|string',
+            'anneeInscription' => 'required|integer',
+            'utilisateur_id' => 'nullable|exists:utilisateurs,id'
         ]);
 
         return response()->json(Etudiant::create($data), 201);
@@ -46,12 +47,31 @@ class EtudiantController extends Controller
 
     public function destroy($id) {
         Etudiant::findOrFail($id)->delete();
-        return response()->json(['message'=>'Etudiant supprimé']);
+        return response()->json(['message' => 'Etudiant supprimé']);
     }
     
-    // ✅ أضف هذه الدالة للتصدير
     public function export()
     {
         return Excel::download(new EtudiantsExport, 'etudiants_' . date('Y-m-d_H-i-s') . '.xlsx');
+    }
+
+    public function import(Request $request) 
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv'
+        ]);
+
+        try {
+            Excel::import(new EtudiantsImport, $request->file('file'));
+            
+            return response()->json([
+                'message' => 'Les étudiants ont été importés avec succès !'
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de l\'importation : ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

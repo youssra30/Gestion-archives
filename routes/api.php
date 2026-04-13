@@ -22,7 +22,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // ----------------- ADMIN_SYSTEME, RESPONSABLE_ARCHIVES -----------------
     Route::middleware('role:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES')->group(function () {
         
-        // ⭐ هام: يجب وضع روابط الـ Export قبل الـ apiResource لتجنب خطأ 404
         Route::get('/utilisateurs/export', [UtilisateurController::class, 'export']);
         Route::get('/etudiants/export', [EtudiantController::class, 'export']);
         Route::get('/dossiers/export', [DossierArchiveController::class, 'export']);
@@ -30,7 +29,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/reclamations/export', [ReclamationController::class, 'export']);
         Route::get('/transferts/export', [TransfertExterneController::class, 'export']);
 
-        // مسارات الـ Resources
         Route::apiResource('utilisateurs', UtilisateurController::class);
         Route::apiResource('bacinfos', BacInfoController::class);
         Route::apiResource('transferts', TransfertExterneController::class);
@@ -49,6 +47,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ----------------- ADMIN_SYSTEME, AGENT_ACCUEIL -----------------
     Route::middleware('role:ADMIN_SYSTEME,AGENT_ACCUEIL')->group(function () {
+        
+        // ⭐⭐⭐ Routes spécifiques pour les mouvements (DOIVENT être avant apiResource)
+        Route::get('/mouvements/en-cours', [MouvementController::class, 'enCours']);
+        Route::get('/mouvements/en-retard', [MouvementController::class, 'enRetard']);
+        Route::get('/mouvements/export', [MouvementController::class, 'export']);
+        
+        Route::post('/mouvements/retrait-temp', [MouvementController::class, 'retraitTemp']);
+        Route::put('/mouvements/{id}/retour', [MouvementController::class, 'retour']);
+        
         Route::apiResource('mouvements', MouvementController::class);
     });
 
@@ -56,5 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT')->group(function () {
         Route::apiResource('reclamations', ReclamationController::class);
     });
+
+    Route::post('/etudiants/import', [EtudiantController::class, 'import']);
 
 });
