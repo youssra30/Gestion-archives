@@ -45,9 +45,7 @@ class ReclamationController extends Controller
         return response()->json(['message'=>'Reclamation supprimée']);
     }
 
-    /**
-     * ✅ تصدير جميع الشكايات إلى Excel
-     */
+    
     public function export()
     {
         return Excel::download(new ReclamationsExport, 'reclamations_' . date('Y-m-d_H-i-s') . '.xlsx');

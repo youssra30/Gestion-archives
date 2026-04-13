@@ -48,18 +48,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // ----------------- ADMIN_SYSTEME, AGENT_ACCUEIL -----------------
     Route::middleware('role:ADMIN_SYSTEME,AGENT_ACCUEIL')->group(function () {
         
-        // ⭐⭐⭐ Routes pour la gestion des dossiers (Agent Accueil)
-        Route::get('/dossiers/rechercher', [DossierArchiveController::class, 'rechercher']);
-        Route::get('/dossiers/consulter/{id}', [DossierArchiveController::class, 'consulter']);
-        Route::post('/dossiers/receptionner', [DossierArchiveController::class, 'receptionner']);
-        
-        // ⭐⭐⭐ Routes pour les mouvements
+        // ⭐ Routes pour les mouvements (vos routes)
         Route::get('/mouvements/en-cours', [MouvementController::class, 'enCours']);
         Route::get('/mouvements/en-retard', [MouvementController::class, 'enRetard']);
         Route::get('/mouvements/export', [MouvementController::class, 'export']);
         
         Route::post('/mouvements/retrait-temp', [MouvementController::class, 'retraitTemp']);
         Route::put('/mouvements/{id}/retour', [MouvementController::class, 'retour']);
+        
+        // ⭐ Routes pour la gestion des dossiers (routes des autres)
+        Route::get('/dossiers/rechercher', [DossierArchiveController::class, 'rechercher']);
+        Route::get('/dossiers/consulter/{id}', [DossierArchiveController::class, 'consulter']);
+        Route::post('/dossiers/receptionner', [DossierArchiveController::class, 'receptionner']);
         
         Route::apiResource('mouvements', MouvementController::class);
     });

@@ -50,11 +50,13 @@ class EtudiantController extends Controller
         return response()->json(['message' => 'Etudiant supprimé']);
     }
     
+    // ✅ دالة التصدير (Export)
     public function export()
     {
         return Excel::download(new EtudiantsExport, 'etudiants_' . date('Y-m-d_H-i-s') . '.xlsx');
     }
 
+    // ✅ دالة الاستيراد (Import)
     public function import(Request $request) 
     {
         $request->validate([
