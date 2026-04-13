@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TransfertExterne;
+use App\Exports\TransfertsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class TransfertExterneController extends Controller
@@ -39,5 +41,13 @@ class TransfertExterneController extends Controller
     public function destroy($id) {
         TransfertExterne::findOrFail($id)->delete();
         return response()->json(['message'=>'Transfert supprimé']);
+    }
+
+    /**
+     * ✅ تصدير جميع التحويلات الخارجية إلى Excel
+     */
+    public function export()
+    {
+        return Excel::download(new TransfertsExport, 'transferts_' . date('Y-m-d_H-i-s') . '.xlsx');
     }
 }

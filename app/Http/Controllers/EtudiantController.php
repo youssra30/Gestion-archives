@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Etudiant;
+use App\Exports\EtudiantsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use App\Imports\EtudiantsImport;
-use Maatwebsite\Excel\Facades\Excel;
 
 class EtudiantController extends Controller
 {
@@ -51,22 +52,27 @@ class EtudiantController extends Controller
 
     public function import(Request $request) 
     {
-
-    $request->validate([
-        'file' => 'required'
-    ]);
-
-    try {
-        Excel::import(new EtudiantsImport, $request->file('file'));
-        
-        return response()->json([
-            'message' => 'Les étudiants ont été importés avec succès !'
-        ], 200);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Erreur lors de l\'importation : ' . $e->getMessage()
-        ], 500);
+        $request->validate(['file' => 'required']);
+        try {
+            Excel::import(new EtudiantsImport, $request->file('file'));
+            return response()->json(['message' => 'Les étudiants ont été importés avec succès !'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Erreur : ' . $e->getMessage()], 500);
+        }
     }
+
+    public function export()
+    {
+        return Excel::download(new EtudiantsExport, 'etudiants_' . date('Y-m-d_H-i-s') . '.xlsx');
+    }
+
+    // بيانات شهادة التسجيل
+    public function generateAttestation($id) {
+        $etudiant = Etudiant::findOrFail($id);
+        return response()->json([
+            'etudiant' => $etudiant,
+            'date_generation' => date('d/m/Y'),
+            'type' => 'ATTESTATION DE SCOLARITE'
+        ]);
     }
 }
