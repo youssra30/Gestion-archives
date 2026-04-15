@@ -236,6 +236,66 @@ Convention `apiResource` par ressource:
 - `PUT/PATCH /api/reclamations/{id}`
 - `DELETE /api/reclamations/{id}`
 
+## Tester toutes les API automatiquement
+
+Pour tester toutes les routes de facon automatique, il y a deux approches utiles.
+
+### 1. Collection Postman ou Insomnia + Newman
+
+C'est la methode la plus simple pour valider rapidement toutes les routes HTTP.
+
+Principe:
+
+- creer une collection avec toutes les requetes `login`, `GET`, `POST`, `PUT`, `DELETE`
+- stocker le token dans une variable d'environnement apres la connexion
+- reexecuter la collection en ligne de commande avec Newman
+
+Exemple d'installation:
+
+```bash
+npm install -g newman
+```
+
+Exemple d'execution:
+
+```bash
+newman run gestion-archives.postman_collection.json -e local.postman_environment.json
+```
+
+Conseil pour ce projet:
+
+- faire d'abord un appel `POST /api/login`
+- recuperer le token renvoye
+- l'utiliser ensuite dans l'en-tete `Authorization: Bearer <token>` pour toutes les autres requetes
+
+### 2. Tests Feature Laravel
+
+Pour une verification plus fiable et automatisable dans le temps, cree des tests PHPUnit / Feature tests.
+
+Ce type de test permet de valider:
+
+- les statuts `200`, `201`, `401`, `403`, `404`
+- les droits par role
+- les validations de champs
+- les retours JSON attendus
+
+Lancement de la suite de tests:
+
+```bash
+composer run test
+```
+
+Exemple de logique de test:
+
+- creer un utilisateur de test avec le role adequat
+- generer un token Sanctum
+- appeler chaque endpoint avec `getJson`, `postJson`, `putJson` et `deleteJson`
+
+Si tu veux un vrai "test de toutes les API" en un seul clic, la meilleure solution est:
+
+1. une collection Postman/Newman pour le controle manuel automatise
+2. des Feature tests Laravel pour la verification continue dans le projet
+
 ## Structure du projet
 
 ```text
