@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\DossierArchive;
+use App\Models\BacInfo;
 
 class Etudiant extends Model
 {
@@ -35,5 +37,10 @@ class Etudiant extends Model
 
     public function bacInfo() {
         return $this->hasOne(BacInfo::class);
+    }
+    
+    // ✅ أضف هذه العلاقة
+    public function utilisateur() {
+        return $this->belongsTo(Utilisateur::class);
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reclamation;
+use App\Exports\ReclamationsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class ReclamationController extends Controller
@@ -41,5 +43,11 @@ class ReclamationController extends Controller
     public function destroy($id) {
         Reclamation::findOrFail($id)->delete();
         return response()->json(['message'=>'Reclamation supprimée']);
+    }
+
+    
+    public function export()
+    {
+        return Excel::download(new ReclamationsExport, 'reclamations_' . date('Y-m-d_H-i-s') . '.xlsx');
     }
 }
