@@ -1,30 +1,141 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Gestion Archives - Backend API (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API backend du systeme de gestion des archives universitaires.
+Ce service expose des endpoints REST proteges par token Sanctum avec gestion des roles.
 
-## Documentation des routes API (Backend)
+## Sommaire
 
-Cette section documente les endpoints definis dans `routes/api.php`.
+- [Vue d'ensemble](#vue-densemble)
+- [Stack technique](#stack-technique)
+- [Prerequis](#prerequis)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Lancer le projet](#lancer-le-projet)
+- [Authentification](#authentification)
+- [Roles et autorisations](#roles-et-autorisations)
+- [Routes API](#routes-api)
+- [Structure du projet](#structure-du-projet)
+- [Tests](#tests)
+- [Depannage](#depannage)
 
-### Base URL
+## Vue d'ensemble
 
-- Locale: `http://localhost:8000/api`
+Le backend permet de gerer:
 
-### Authentification
+- Utilisateurs
+- Etudiants
+- Informations bac
+- Dossiers d'archive
+- Documents
+- Mouvements
+- Reclamations
+- Transferts externes
 
-- Toutes les routes sont protegees par `auth:sanctum`.
-- Un token Sanctum valide doit etre envoye dans l'en-tete:
+Les routes principales sont definies dans `routes/api.php`.
+
+## Stack technique
+
+- PHP 8.3+
+- Laravel 13
+- Laravel Sanctum (authentification par token)
+- Base de donnees SQLite par defaut (configurable MySQL/PostgreSQL)
+- Vite (assets frontend Laravel)
+
+## Prerequis
+
+- PHP >= 8.3
+- Composer
+- Node.js >= 20
+- npm
+- Extension PHP sqlite active (si vous gardez SQLite)
+
+## Installation
+
+```bash
+git clone <url-du-repo>
+cd Gestion-archives
+
+composer install
+npm install
+
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+```
+
+Option rapide (script composer):
+
+```bash
+composer run setup
+```
+
+## Configuration
+
+Variables importantes dans `.env`:
+
+- `APP_URL`: URL de l'application (ex: `http://localhost:8000`)
+- `DB_CONNECTION`: `sqlite`, `mysql`, etc.
+- `QUEUE_CONNECTION`: file de jobs (par defaut `database`)
+
+Exemple SQLite local:
+
+```env
+DB_CONNECTION=sqlite
+```
+
+Exemple MySQL:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=gestion_archives
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+## Lancer le projet
+
+Mode developpement complet (serveur + queue + logs + vite):
+
+```bash
+composer run dev
+```
+
+Ou en mode simple:
+
+```bash
+php artisan serve
+```
+
+Base URL API en local:
+
+`http://localhost:8000/api`
+
+## Authentification
+
+Endpoint public:
+
+- `POST /api/login`
+
+Exemple de payload:
+
+```json
+{
+	"email": "admin@exemple.com",
+	"password": "motdepasse"
+}
+```
+
+Pour les routes protegees, envoyer:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-### Roles utilises
+## Roles et autorisations
+
+Roles utilises:
 
 - `ADMIN_SYSTEME`
 - `RESPONSABLE_ARCHIVES`
@@ -32,9 +143,13 @@ Authorization: Bearer <token>
 - `CONSULTANT`
 - `ETUDIANT`
 
-### Convention des routes `apiResource`
+Le middleware personnalise de role est enregistre via alias `role`.
 
-Chaque ressource expose les routes REST suivantes:
+## Routes API
+
+Toutes les routes ci-dessous sont sous le prefixe `/api`.
+
+Convention `apiResource` par ressource:
 
 - `GET /{resource}`: lister
 - `POST /{resource}`: creer
@@ -42,22 +157,22 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /{resource}/{id}`: modifier
 - `DELETE /{resource}/{id}`: supprimer
 
-### Endpoints par ressource
+### Matrice d'acces par ressource
 
-| Ressource | Prefixe | Roles autorises |
+| Ressource | Endpoint de base | Roles autorises |
 | --- | --- | --- |
 | Utilisateurs | `/utilisateurs` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES` |
 | Bac infos | `/bacinfos` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES` |
 | Transferts externes | `/transferts` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES` |
 | Etudiants | `/etudiants` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL` |
-| Dossiers d'archive | `/dossiers` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL`, `CONSULTANT` |
+| Dossiers archives | `/dossiers` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL`, `CONSULTANT` |
 | Documents | `/documents` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL`, `CONSULTANT` |
 | Mouvements | `/mouvements` | `ADMIN_SYSTEME`, `AGENT_ACCUEIL` |
 | Reclamations | `/reclamations` | `ADMIN_SYSTEME`, `RESPONSABLE_ARCHIVES`, `AGENT_ACCUEIL`, `CONSULTANT`, `ETUDIANT` |
 
-### Liste detaillee des endpoints
+### Endpoints detailles
 
-#### `utilisateurs`
+#### Utilisateurs
 
 - `GET /api/utilisateurs`
 - `POST /api/utilisateurs`
@@ -65,7 +180,7 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/utilisateurs/{id}`
 - `DELETE /api/utilisateurs/{id}`
 
-#### `bacinfos`
+#### Bac infos
 
 - `GET /api/bacinfos`
 - `POST /api/bacinfos`
@@ -73,7 +188,7 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/bacinfos/{id}`
 - `DELETE /api/bacinfos/{id}`
 
-#### `transferts`
+#### Transferts externes
 
 - `GET /api/transferts`
 - `POST /api/transferts`
@@ -81,7 +196,7 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/transferts/{id}`
 - `DELETE /api/transferts/{id}`
 
-#### `etudiants`
+#### Etudiants
 
 - `GET /api/etudiants`
 - `POST /api/etudiants`
@@ -89,7 +204,7 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/etudiants/{id}`
 - `DELETE /api/etudiants/{id}`
 
-#### `dossiers`
+#### Dossiers
 
 - `GET /api/dossiers`
 - `POST /api/dossiers`
@@ -97,7 +212,7 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/dossiers/{id}`
 - `DELETE /api/dossiers/{id}`
 
-#### `documents`
+#### Documents
 
 - `GET /api/documents`
 - `POST /api/documents`
@@ -105,7 +220,7 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/documents/{id}`
 - `DELETE /api/documents/{id}`
 
-#### `mouvements`
+#### Mouvements
 
 - `GET /api/mouvements`
 - `POST /api/mouvements`
@@ -113,7 +228,7 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/mouvements/{id}`
 - `DELETE /api/mouvements/{id}`
 
-#### `reclamations`
+#### Reclamations
 
 - `GET /api/reclamations`
 - `POST /api/reclamations`
@@ -121,57 +236,37 @@ Chaque ressource expose les routes REST suivantes:
 - `PUT/PATCH /api/reclamations/{id}`
 - `DELETE /api/reclamations/{id}`
 
-### Note
+## Structure du projet
 
-- Les endpoints `/api` ci-dessus supposent que l'application est servie avec `php artisan serve`.
-- Les regles fines de validation/champs se trouvent dans les Controllers et Form Requests associes.
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```text
+app/
+	Http/
+		Controllers/
+		Middleware/
+	Models/
+database/
+	migrations/
+routes/
+	api.php
+tests/
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Tests
 
-## Contributing
+Lancer la suite de tests:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer run test
+```
 
-## Code of Conduct
+## Depannage
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Si une route protegee retourne `401`: verifier le token Sanctum et l'en-tete `Authorization`.
+- Si une route retourne `403`: verifier le role de l'utilisateur authentifie.
+- Si les migrations echouent: verifier la configuration base de donnees dans `.env`.
+- Si Vite ne demarre pas: refaire `npm install` puis `npm run dev`.
 
-## Security Vulnerabilities
+## Notes
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Les regles de validation metier sont dans les controllers et/ou form requests.
+- Le projet peut etre complete par une documentation OpenAPI (Swagger) pour faciliter les tests d'integration.
