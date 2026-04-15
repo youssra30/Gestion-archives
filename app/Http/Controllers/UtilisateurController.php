@@ -44,7 +44,7 @@ class UtilisateurController extends Controller
         // 6. Génération du token Sanctum
         // Optionnel : on peut supprimer les anciens tokens avec $user->tokens()->delete();
         $token = $user->createToken('admin_token')->plainTextToken;
-    public function store(Request $request) {
+     function store(Request $request) {
     $user = Auth::user();
 
     if (!$user || $user->role !== 'ADMIN_SYSTEME') {
@@ -67,7 +67,7 @@ class UtilisateurController extends Controller
     return response()->json($newUser, 201);
 }
 
-    public function update(Request $request, $id) {
+     function update(Request $request, $id) {
         $user = Utilisateur::findOrFail($id);
         $user->update($request->all());
         return response()->json($user);
