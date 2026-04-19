@@ -33,7 +33,19 @@ class DossierArchiveController extends Controller
 
     public function update(Request $request, $id) {
         $dossier = DossierArchive::findOrFail($id);
-        $dossier->update($request->all());
+
+        $data = $request->validate([
+            'numeroDossier' => 'sometimes|unique:dossier_archives,numeroDossier,' . $id,
+            'etudiant_id'   => 'sometimes|exists:etudiants,id',
+            'typeCas'       => 'sometimes|string|max:100',
+            'statut'        => 'sometimes|string|max:50',
+            'dateArchivage' => 'nullable|date',
+            'localisation'  => 'nullable|string|max:255',
+            'observations'  => 'nullable|string|max:1000',
+        ]);
+
+        $dossier->update($data);
+
         return response()->json($dossier);
     }
 

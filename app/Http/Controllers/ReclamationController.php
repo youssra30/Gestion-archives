@@ -36,7 +36,22 @@ class ReclamationController extends Controller
 
     public function update(Request $request, $id) {
         $reclamation = Reclamation::findOrFail($id);
-        $reclamation->update($request->all());
+
+        $data = $request->validate([
+            'dossier_id'        => 'sometimes|exists:dossier_archives,id',
+            'demandeur'         => 'sometimes|string|max:255',
+            'typeDemande'       => 'sometimes|string|max:100',
+            'dateDemande'       => 'sometimes|date',
+            'statut'            => 'sometimes|string|max:50',
+            'documentsDemandes' => 'nullable|array',
+            'motif'             => 'nullable|string|max:500',
+            'traite_par'        => 'nullable|exists:utilisateurs,id',
+            'reponse'           => 'nullable|string|max:1000',
+            'dateTraitement'    => 'nullable|date',
+        ]);
+
+        $reclamation->update($data);
+
         return response()->json($reclamation);
     }
 

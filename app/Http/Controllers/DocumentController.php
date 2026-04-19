@@ -31,7 +31,19 @@ class DocumentController extends Controller
 
     public function update(Request $request, $id) {
         $document = Document::findOrFail($id);
-        $document->update($request->all());
+
+        $data = $request->validate([
+            'dossier_id'      => 'sometimes|exists:dossier_archives,id',
+            'type_document'   => 'sometimes|string|max:100',
+            'nomFichier'      => 'sometimes|string|max:255',
+            'cheminStockage'  => 'sometimes|string|max:500',
+            'ajoute_par'      => 'sometimes|exists:utilisateurs,id',
+            'taille'          => 'sometimes|integer',
+            'format'          => 'sometimes|string|max:50',
+        ]);
+
+        $document->update($data);
+
         return response()->json($document);
     }
 

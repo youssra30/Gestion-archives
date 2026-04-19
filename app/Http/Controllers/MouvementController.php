@@ -38,7 +38,24 @@ class MouvementController extends Controller
 
     public function update(Request $request, $id) {
         $mouvement = Mouvement::findOrFail($id);
-        $mouvement->update($request->all());
+
+        $data = $request->validate([
+            'dossier_id'          => 'sometimes|exists:dossier_archives,id',
+            'type_mouvement'      => 'sometimes|string|max:100',
+            'dateMouvement'       => 'sometimes|date',
+            'motif'               => 'sometimes|string|max:500',
+            'provenance'          => 'nullable|string|max:255',
+            'destination'         => 'nullable|string|max:255',
+            'effectue_par'        => 'sometimes|exists:utilisateurs,id',
+            'documentRetire'      => 'nullable|boolean',
+            'documentsRetires'    => 'nullable|array',
+            'dateRetourPrevu'     => 'nullable|date',
+            'dateRetourEffectif'  => 'nullable|date',
+            'statut'              => 'sometimes|string|max:50',
+        ]);
+
+        $mouvement->update($data);
+
         return response()->json($mouvement);
     }
 
