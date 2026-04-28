@@ -48,12 +48,23 @@ class EtudiantsImport implements ToModel, WithHeadingRow, WithValidation, SkipsO
         // anneeInscription, etablissementOrigine, etablisssementAccueil, photoUrl,
         // serie, mention, aneeObtention, lycee, academie, copieScaneerUrl, typeCas
 
+        $dateNaissance = $row['datenaissance'] ?? null;
+        if (is_numeric($dateNaissance)) {
+            $dateNaissance = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateNaissance)->format('Y-m-d');
+        } elseif ($dateNaissance) {
+            try {
+                $dateNaissance = \Carbon\Carbon::parse($dateNaissance)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // Garder la valeur originale ou null en cas d'erreur de parsing
+            }
+        }
+
         return new Etudiant([
             'cne'                  => $row['cne'],
             'cin'                  => $row['cin'],
             'nom'                  => $row['nom'],
             'prenom'               => $row['prenom'],
-            'dateNaissance'        => $row['datenaissance'] ?? null,
+            'dateNaissance'        => $dateNaissance,
             'lieuNaissance'        => $row['lieunaissance'] ?? '',
             'nationalite'          => $row['nationalite'] ?? 'Marocaine',
             'sexe'                 => strtoupper($row['sexe'] ?? 'MASCULIN'),

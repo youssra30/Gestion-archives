@@ -74,6 +74,32 @@ class EtudiantController extends Controller
         Etudiant::findOrFail($id)->delete();
         return response()->json(['message'=>'Etudiant supprimé']);
     }
+
+    /**
+     * Supprimer tous les étudiants — nécessite un code de confirmation.
+     */
+    public function destroyAll(Request $request) {
+        $request->validate([
+            'code' => 'required|string',
+        ]);
+
+        // Code de sécurité requis pour la suppression massive
+        $securityCode = 'DELETE-ALL-2026';
+
+        if ($request->code !== $securityCode) {
+            return response()->json([
+                'message' => 'Code de confirmation incorrect.',
+            ], 403);
+        }
+
+        $count = Etudiant::count();
+        Etudiant::truncate();
+
+        return response()->json([
+            'message' => "Tous les étudiants ont été supprimés ($count enregistrements).",
+            'deleted' => $count,
+        ]);
+    }
     
     
     public function export()

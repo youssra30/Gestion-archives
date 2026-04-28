@@ -17,7 +17,12 @@ class CheckRole
             ], 401);
         }
 
-        if (!in_array($user->role, $roles)) {
+        // SUPER_ADMIN has global access to role-protected endpoints.
+        if ($user->role === 'SUPER_ADMIN') {
+            return $next($request);
+        }
+
+        if (!in_array($user->role, $roles, true)) {
             return response()->json([
                 'message' => 'Accès refusé'
             ], 403);

@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL')->group(function () {
 
+        Route::delete('/etudiants/delete-all', [EtudiantController::class, 'destroyAll']);
         Route::apiResource('etudiants', EtudiantController::class);
     });
 
