@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Utilisateur;
 use App\Exports\UtilisateursExport;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\UtilisateursImport;
+use App\Models\Utilisateur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UtilisateurController extends Controller
 {
-    
     public function index()
     {
         return response()->json(Utilisateur::all());
@@ -30,33 +30,25 @@ class UtilisateurController extends Controller
             'email' => 'required|email|unique:utilisateurs',
             'password' => 'required|min:6',
             'telephone' => 'nullable|string',
-            'role' => 'required|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL'
+            'role' => 'required|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL',
         ]);
 
         $currentUser = $request->user();
 
         if (!$currentUser) {
-            return response()->json([
-                'message' => 'Non authentifié'
-            ], 401);
+            return response()->json(['message' => 'Non authentifié'], 401);
         }
 
         if ($currentUser->role === 'SUPER_ADMIN') {
             if ($request->role !== 'ADMIN_SYSTEME') {
-                return response()->json([
-                    'message' => 'SuperAdmin peut  créer ADMIN_SYSTEME'
-                ], 403);
+                return response()->json(['message' => 'SuperAdmin peut créer seulement ADMIN_SYSTEME'], 403);
             }
         } elseif ($currentUser->role === 'ADMIN_SYSTEME') {
-            if (!in_array($request->role, ['RESPONSABLE_ARCHIVES', 'AGENT_ACCUEIL'])) {
-                return response()->json([
-                    'message' => 'Admin peut créer Responsable_Archives ou Agent_Acceuil'
-                ], 403);
+            if (!in_array($request->role, ['RESPONSABLE_ARCHIVES', 'AGENT_ACCUEIL'], true)) {
+                return response()->json(['message' => 'Admin peut créer Responsable_Archives ou Agent_Accueil'], 403);
             }
         } else {
-            return response()->json([
-                'message' => 'Accès interdit'
-            ], 403);
+            return response()->json(['message' => 'Accès interdit'], 403);
         }
 
         $user = Utilisateur::create([
@@ -66,20 +58,12 @@ class UtilisateurController extends Controller
             'email' => $request->email,
             'telephone' => $request->telephone,
             'password' => Hash::make($request->password),
-            'role' => $request->role
+            'role' => $request->role,
         ]);
 
-        // 6. Génération du token Sanctum
-        // Optionnel : on peut supprimer les anciens tokens avec $user->tokens()->delete();
-        $token = $user->createToken('admin_token')->plainTextToken;
-     function store(Request $request) {
-    $user = Auth::user();
-
-    if (!$user || $user->role !== 'ADMIN_SYSTEME') {
-        return response()->json(['message' => 'Seul le Super Admin peut créer des utilisateurs.'], 403);
         return response()->json([
             'message' => 'Utilisateur créé avec succès',
-            'user' => $user
+            'user' => $user,
         ], 201);
     }
 
@@ -94,33 +78,26 @@ class UtilisateurController extends Controller
             'email' => 'sometimes|email|unique:utilisateurs,email,' . $id,
             'telephone' => 'nullable|string',
             'password' => 'nullable|min:6',
-            'role' => 'sometimes|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT'
+            'role' => 'sometimes|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT',
         ]);
 
-        if ($request->has('password')) {
+        if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-     function update(Request $request, $id) {
-        $user = Utilisateur::findOrFail($id);
-        $user->update($request->all());
         return response()->json($user);
     }
 
-   
     public function destroy($id)
     {
         $user = Utilisateur::findOrFail($id);
         $user->delete();
 
-        return response()->json([
-            'message' => 'Utilisateur supprimé avec succès'
-        ]);
+        return response()->json(['message' => 'Utilisateur supprimé avec succès']);
     }
 
-   
     public function login(Request $request)
     {
         $request->validate([
@@ -130,34 +107,23 @@ class UtilisateurController extends Controller
 
         $user = Utilisateur::where('email', $request->email)->first();
 
+        // Vérification des identifiants
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Les identifiants sont incorrects'
-            ], 401);
+            return response()->json(['message' => 'Les identifiants sont incorrects'], 401);
         }
 
-    
-        if (!in_array($user->role, ['SUPER_ADMIN', 'ADMIN_SYSTEME'])) {
-            return response()->json([
-                'message' => 'Accès refusé'
-            ], 403);
-        }
-
-      
         $user->tokens()->delete();
 
-      
         $user->update([
-            'derniereConnexion' => now()
+            'derniereConnexion' => now(),
         ]);
 
-       
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Connexion réussie',
             'utilisateur' => $user,
-            'token' => $token
+            'token' => $token,
         ], 200);
     }
 
@@ -165,12 +131,9 @@ class UtilisateurController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Déconnexion réussie'
-        ], 200);
+        return response()->json(['message' => 'Déconnexion réussie'], 200);
     }
 
-   
     public function export()
     {
         return Excel::download(
@@ -178,4 +141,22 @@ class UtilisateurController extends Controller
             'utilisateurs_' . date('Y-m-d_H-i-s') . '.xlsx'
         );
     }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            Excel::import(new UtilisateursImport, $request->file('file'));
+            return response()->json(['message' => 'Importation réussie'], 200);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            return response()->json([
+                'message' => 'Erreurs de validation dans le fichier',
+                'errors' => $e->failures(),
+            ], 422);
+        }
+    }
 }
+

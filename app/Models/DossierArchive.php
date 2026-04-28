@@ -27,14 +27,14 @@ class DossierArchive extends Model
     }
 
     public function mouvements() {
-        return $this->hasMany(Mouvement::class);
+        return $this->hasMany(Mouvement::class, 'dossier_id');
     }
 
     public function reclamations() {
-        return $this->hasMany(Reclamation::class);
+        return $this->hasMany(Reclamation::class, 'dossier_id');
     }
 
     public function transferts() {
-        return $this->hasMany(TransfertExterne::class);
+        return $this->hasMany(TransfertExterne::class, 'dossier_id');
     }
 }

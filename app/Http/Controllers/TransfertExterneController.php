@@ -34,7 +34,20 @@ class TransfertExterneController extends Controller
 
     public function update(Request $request, $id) {
         $transfert = TransfertExterne::findOrFail($id);
-        $transfert->update($request->all());
+
+        $data = $request->validate([
+            'dossier_id'         => 'sometimes|exists:dossier_archives,id',
+            'ecoleOrigine'       => 'sometimes|string|max:255',
+            'ecoleDestination'   => 'sometimes|string|max:255',
+            'dateDemande'        => 'sometimes|date',
+            'dateValidation'     => 'nullable|date',
+            'statut'             => 'sometimes|string|max:50',
+            'documentsTransmis'  => 'nullable|array',
+            'referenceCourrier'  => 'nullable|string|max:255',
+        ]);
+
+        $transfert->update($data);
+
         return response()->json($transfert);
     }
 

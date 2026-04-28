@@ -250,6 +250,67 @@ Principe:
 - stocker le token dans une variable d'environnement apres la connexion
 - reexecuter la collection en ligne de commande avec Newman
 
+#### Etapes pas a pas dans Postman
+
+1. Creer un nouvel environment, par exemple `local`.
+2. Ajouter les variables suivantes:
+	 - `base_url` = `http://localhost:8000/api`
+	 - `token` = vide au depart
+3. Creer une collection `Gestion Archives`.
+4. Ajouter la requete `POST {{base_url}}/login`.
+5. Placer dans l'onglet Body un JSON avec `email` et `password`.
+6. Dans l'onglet Tests de cette requete, extraire le token si l'API le renvoie.
+7. Ajouter ensuite toutes les requetes protegees de la collection en reutilisant `{{token}}` dans l'en-tete `Authorization`.
+8. Lancer la collection avec le Collection Runner pour executer toutes les routes automatiquement.
+9. Si tu veux executer sans ouvrir Postman, exporter la collection puis la lancer avec Newman.
+
+#### Scripts Postman utiles
+
+Dans la requete de login, si la reponse contient un champ `token`:
+
+```javascript
+const response = pm.response.json();
+if (response.token) {
+	pm.environment.set('token', response.token);
+}
+```
+
+Dans les requetes protegees, ajouter cet en-tete:
+
+```http
+Authorization: Bearer {{token}}
+```
+
+Exemple de test pour verifier le code HTTP:
+
+```javascript
+pm.test('Status code is 200', function () {
+	pm.response.to.have.status(200);
+});
+```
+
+#### Ordre recommande des requetes
+
+Pour tester toute l'API dans un ordre logique:
+
+1. `POST /api/login`
+2. `GET /api/utilisateurs`
+3. `POST /api/utilisateurs`
+4. `GET /api/bacinfos`
+5. `POST /api/bacinfos`
+6. `GET /api/transferts`
+7. `POST /api/transferts`
+8. `GET /api/etudiants`
+9. `POST /api/etudiants`
+10. `GET /api/dossiers`
+11. `POST /api/dossiers`
+12. `GET /api/documents`
+13. `POST /api/documents`
+14. `GET /api/mouvements`
+15. `POST /api/mouvements`
+16. `GET /api/reclamations`
+17. `POST /api/reclamations`
+
 Exemple d'installation:
 
 ```bash
