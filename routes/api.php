@@ -19,6 +19,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [UtilisateurController::class, 'logout']);
 
+    // ─── Profil utilisateur (accessible par tout utilisateur authentifié) ───
+    Route::get('/profile', [UtilisateurController::class, 'profile']);
+    Route::put('/profile', [UtilisateurController::class, 'updateProfile']);
+
     Route::middleware('role:SUPER_ADMIN,ADMIN_SYSTEME')->group(function () {
 
         Route::get('/statistiques', [StatistiqueController::class, 'index']);
@@ -51,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT')->group(function () {
 
+        Route::post('/dossiers/generate-from-etudiants', [DossierArchiveController::class, 'generateFromEtudiants']);
         Route::apiResource('dossiers', DossierArchiveController::class);
         Route::apiResource('documents', DocumentController::class);
     });

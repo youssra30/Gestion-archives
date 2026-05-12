@@ -20,7 +20,12 @@ class Utilisateur extends Authenticatable
         'password',
         'telephone',
         'role',
+        'is_origin',
         'derniereConnexion'
+    ];
+
+    protected $casts = [
+        'is_origin' => 'boolean',
     ];
 
     protected $hidden = [

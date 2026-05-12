@@ -102,9 +102,10 @@ class EtudiantController extends Controller
     }
     
     
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new EtudiantsExport, 'etudiants_' . date('Y-m-d_H-i-s') . '.xlsx');
+        $filiere = $request->query('filiere');
+        return Excel::download(new EtudiantsExport($filiere), 'etudiants_' . date('Y-m-d_H-i-s') . '.xlsx');
     }
 
     public function import(Request $request)

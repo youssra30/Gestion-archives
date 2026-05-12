@@ -54,8 +54,61 @@ class DossierArchiveController extends Controller
         return response()->json(['message'=>'Dossier supprimé']);
     }
     
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new DossiersExport, 'dossiers_archives_' . date('Y-m-d_H-i-s') . '.xlsx');
+        $filiere = $request->query('filiere');
+        return Excel::download(new DossiersExport($filiere), 'dossiers_archives_' . date('Y-m-d_H-i-s') . '.xlsx');
+    }
+
+    /**
+     * Générer automatiquement les dossiers pour tous les étudiants
+     * qui n'en possèdent pas encore. numeroDossier = CNE de l'étudiant.
+     */
+    public function generateFromEtudiants(Request $request)
+    {
+        $data = $request->validate([
+            'typeCas'      => 'required|string',
+            'statut'       => 'required|string',
+            'localisation' => 'nullable|string',
+        ]);
+
+        // Étudiants qui ont déjà un dossier
+        $existingIds = DossierArchive::pluck('etudiant_id')->toArray();
+
+        // Étudiants sans dossier
+        $etudiants = \App\Models\Etudiant::whereNotIn('id', $existingIds)->get();
+
+        if ($etudiants->isEmpty()) {
+            return response()->json([
+                'message' => 'Tous les étudiants possèdent déjà un dossier.',
+                'created' => 0,
+            ]);
+        }
+
+        $created = 0;
+        $errors  = [];
+
+        foreach ($etudiants as $etudiant) {
+            try {
+                DossierArchive::create([
+                    'numeroDossier' => $etudiant->cne,
+                    'etudiant_id'   => $etudiant->id,
+                    'typeCas'       => $data['typeCas'],
+                    'statut'        => $data['statut'],
+                    'dateArchivage' => now()->toDateString(),
+                    'localisation'  => $data['localisation'] ?? null,
+                    'observations'  => null,
+                ]);
+                $created++;
+            } catch (\Exception $e) {
+                $errors[] = "CNE {$etudiant->cne}: {$e->getMessage()}";
+            }
+        }
+
+        return response()->json([
+            'message' => "$created dossier(s) créé(s) avec succès.",
+            'created' => $created,
+            'errors'  => array_slice($errors, 0, 10),
+        ], 201);
     }
 }

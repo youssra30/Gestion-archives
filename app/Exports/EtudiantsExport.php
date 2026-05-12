@@ -3,15 +3,40 @@
 namespace App\Exports;
 
 use App\Models\Etudiant;
+use App\Helpers\NormalizeFiliereHelper;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
 class EtudiantsExport implements FromCollection, WithHeadings, WithMapping
 {
+    /**
+     * Filtre optionnel par filière normalisée (GEER, IAA, IAC, TDI, CP).
+     */
+    protected ?string $filiereFilter;
+
+    public function __construct(?string $filiereFilter = null)
+    {
+        $this->filiereFilter = $filiereFilter;
+    }
+
     public function collection()
     {
-        return Etudiant::with('bacInfo')->get();
+        $etudiants = Etudiant::with('bacInfo')->get();
+
+        // Filtrer : ne garder que les étudiants dont la filière normalisée
+        // correspond aux filières officielles (GEER, IAA, IAC, TDI, CP)
+        return $etudiants->filter(function ($etudiant) {
+            $normalized = NormalizeFiliereHelper::normalize($etudiant->filiere);
+
+            // Si un filtre spécifique est demandé
+            if ($this->filiereFilter) {
+                return $normalized === $this->filiereFilter;
+            }
+
+            // Sinon, ne garder que les filières officielles
+            return NormalizeFiliereHelper::isOfficielle($etudiant->filiere);
+        });
     }
     
     public function headings(): array
@@ -20,7 +45,7 @@ class EtudiantsExport implements FromCollection, WithHeadings, WithMapping
             'ID', 'CNE', 'CIN', 'Nom', 'Prénom', 'Date Naissance', 
             'Lieu Naissance', 'Nationalité', 'Sexe', 'Adresse', 
             'Téléphone', 'Email', 'Nom Père', 'Nom Mère', 
-            'Adresse Parents', 'Filière', 'Année Inscription',
+            'Adresse Parents', 'Filière', 'Filière Normalisée', 'Année Inscription',
             'Etablissement Origine', 'Etablissement Accueil', 
             'Série Bac', 'Mention Bac', 'Année Bac', 'Lycée', 'Académie',
             'Date Création', 'Date Modification'
@@ -46,6 +71,7 @@ class EtudiantsExport implements FromCollection, WithHeadings, WithMapping
             $etudiant->nomMere,
             $etudiant->adresseParents,
             $etudiant->filiere,
+            NormalizeFiliereHelper::normalize($etudiant->filiere),
             $etudiant->anneeInscription,
             $etudiant->etablissementOrigine,
             $etudiant->etablissementAccueil,
