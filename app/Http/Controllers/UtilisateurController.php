@@ -30,7 +30,7 @@ class UtilisateurController extends Controller
             'email' => 'required|email|unique:utilisateurs',
             'password' => 'required|min:6',
             'telephone' => 'nullable|string',
-            'role' => 'required|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL',
+            'role' => 'required|in:SUPER_ADMIN,ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL',
         ]);
 
         $currentUser = $request->user();
@@ -40,9 +40,8 @@ class UtilisateurController extends Controller
         }
 
         if ($currentUser->role === 'SUPER_ADMIN') {
-            if ($request->role !== 'ADMIN_SYSTEME') {
-                return response()->json(['message' => 'SuperAdmin peut créer seulement ADMIN_SYSTEME'], 403);
-            }
+            // Super admin peut créer : SUPER_ADMIN, ADMIN_SYSTEME, RESPONSABLE_ARCHIVES, AGENT_ACCUEIL
+            // Les nouveaux super admins auront is_origin = false
         } elseif ($currentUser->role === 'ADMIN_SYSTEME') {
             if (!in_array($request->role, ['RESPONSABLE_ARCHIVES', 'AGENT_ACCUEIL'], true)) {
                 return response()->json(['message' => 'Admin peut créer Responsable_Archives ou Agent_Accueil'], 403);
@@ -59,6 +58,7 @@ class UtilisateurController extends Controller
             'telephone' => $request->telephone,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'is_origin' => false, // Les nouveaux utilisateurs ne sont jamais origin
         ]);
 
         return response()->json([
@@ -69,7 +69,23 @@ class UtilisateurController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = Utilisateur::findOrFail($id);
+        $currentUser = $request->user();
+        $targetUser = Utilisateur::findOrFail($id);
+
+        // ─── Garde 1 : personne ne peut modifier un utilisateur is_origin (sauf via profil) ───
+        if ($targetUser->is_origin && $currentUser->id !== $targetUser->id) {
+            return response()->json(['message' => 'Le super administrateur d\'origine ne peut pas être modifié'], 403);
+        }
+
+        // ─── Garde 2 : un utilisateur ne peut pas changer son propre rôle via cette route ───
+        if ($currentUser->id === (int) $id && $request->has('role') && $request->role !== $currentUser->role) {
+            return response()->json(['message' => 'Vous ne pouvez pas modifier votre propre rôle'], 403);
+        }
+
+        // ─── Garde 3 : un super admin non-origin ne peut pas modifier un autre super admin ───
+        if (!$currentUser->is_origin && $targetUser->role === 'SUPER_ADMIN' && $currentUser->id !== $targetUser->id) {
+            return response()->json(['message' => 'Seul le super administrateur d\'origine peut modifier un autre super administrateur'], 403);
+        }
 
         $data = $request->validate([
             'username' => 'sometimes|unique:utilisateurs,username,' . $id,
@@ -78,24 +94,80 @@ class UtilisateurController extends Controller
             'email' => 'sometimes|email|unique:utilisateurs,email,' . $id,
             'telephone' => 'nullable|string',
             'password' => 'nullable|min:6',
-            'role' => 'sometimes|in:ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT',
+            'role' => 'sometimes|in:SUPER_ADMIN,ADMIN_SYSTEME,RESPONSABLE_ARCHIVES,AGENT_ACCUEIL,CONSULTANT,ETUDIANT',
         ]);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
-        $user->update($data);
+        $targetUser->update($data);
 
-        return response()->json($user);
+        return response()->json($targetUser);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $user = Utilisateur::findOrFail($id);
-        $user->delete();
+        $currentUser = $request->user();
+        $targetUser = Utilisateur::findOrFail($id);
+
+        // ─── Garde 1 : personne ne peut supprimer un utilisateur is_origin ───
+        if ($targetUser->is_origin) {
+            return response()->json(['message' => 'Le super administrateur d\'origine ne peut pas être supprimé'], 403);
+        }
+
+        // ─── Garde 2 : un utilisateur ne peut pas se supprimer lui-même ───
+        if ($currentUser->id === $targetUser->id) {
+            return response()->json(['message' => 'Vous ne pouvez pas supprimer votre propre compte'], 403);
+        }
+
+        // ─── Garde 3 : un super admin non-origin ne peut pas supprimer un autre super admin ───
+        if (!$currentUser->is_origin && $targetUser->role === 'SUPER_ADMIN') {
+            return response()->json(['message' => 'Seul le super administrateur d\'origine peut supprimer un autre super administrateur'], 403);
+        }
+
+        $targetUser->delete();
 
         return response()->json(['message' => 'Utilisateur supprimé avec succès']);
+    }
+
+    // ─── Profil : consulter son propre profil ───────────────────────
+    public function profile(Request $request)
+    {
+        return response()->json($request->user());
+    }
+
+    // ─── Profil : modifier son propre profil ────────────────────────
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'nom' => 'sometimes|string',
+            'prenom' => 'sometimes|string',
+            'email' => 'sometimes|email|unique:utilisateurs,email,' . $user->id,
+            'telephone' => 'nullable|string',
+            'current_password' => 'required_with:new_password|string',
+            'new_password' => 'nullable|min:6|confirmed',
+        ]);
+
+        // Vérifier l'ancien mot de passe si changement demandé
+        if ($request->filled('new_password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json(['message' => 'Le mot de passe actuel est incorrect'], 422);
+            }
+            $data['password'] = Hash::make($request->new_password);
+        }
+
+        // Retirer les champs de mot de passe du tableau de mise à jour
+        unset($data['current_password'], $data['new_password'], $data['new_password_confirmation']);
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Profil mis à jour avec succès',
+            'utilisateur' => $user->fresh(),
+        ]);
     }
 
     public function login(Request $request)
@@ -159,4 +231,3 @@ class UtilisateurController extends Controller
         }
     }
 }
-
